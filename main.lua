@@ -50,9 +50,23 @@ local messageFrame = CreateFrame("FRAME", "ScalebaneLootMessageFrame")
 messageFrame :RegisterEvent("CHAT_MSG_RAID")
 messageFrame :RegisterEvent("CHAT_MSG_RAID_LEADER")
 messageFrame :SetScript("OnEvent", function (self, event, message, author)
-  local sName = GetItemInfo(message)
-  if sName == nil then return; end
-  local item = {link=message, owner=author}
+  local itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = GetItemInfo(message)
+
+  -- Filter out some items. Such as items that are lower than rare quality and items that are consumables, etc.
+  -- https://wow.gamepedia.com/Enum.ItemQuality
+  -- https://wow.gamepedia.com/ItemType
+  if (itemName == nil) -- Make sure it's an item.
+    or (itemQuality < 3) -- Filter out anything that's not a Rare quality or better
+    or (itemType == 0) -- Consumables
+    or (itemType == 5 and (itemSubType == 0 or itemSubType == 1)) -- Reagents and Keystones
+    or (itemType == 7) -- Tradeskills
+    or (itemType == 12) -- Quest items
+    or (itemType == 15 and (itemSubType == 1 or itemSubType == 4)) -- Reagents and Anima
+  then
+    return
+  end
+
+  local item = {link=itemLink, owner=author}
   table.insert(items, item)
   C_Timer.After(5, start)
 end)
